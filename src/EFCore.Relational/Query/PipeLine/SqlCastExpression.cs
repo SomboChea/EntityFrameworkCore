@@ -8,7 +8,6 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
     public class SqlCastExpression : Expression
     {
-
         public SqlCastExpression(SqlExpression expression, Type type, string storeType)
         {
             Expression = expression;

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
@@ -123,7 +124,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 var stringTypeMapping = _typeMappingSource.FindMapping(typeof(string));
 
                 sqlExpression = new SqlExpression(
-                    new SqlCastExpression(sqlExpression, sqlExpression.Type, stringTypeMapping.StoreType),
+                    new SqlCastExpression(sqlExpression, stringTypeMapping.ClrType, stringTypeMapping.StoreType),
                     stringTypeMapping);
             }
 
@@ -224,8 +225,15 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 && unaryExpression.NodeType == ExpressionType.Convert)
             {
                 var typeMapping = _typeMappingSource.FindMapping(unaryExpression.Type);
+                var resultType = typeMapping.ClrType;
+
+                if (unaryExpression.Type.IsNullableType())
+                {
+                    resultType = resultType.MakeNullable();
+                }
+
                 return new SqlExpression(
-                    new SqlCastExpression(operandSql, unaryExpression.Type, typeMapping.StoreType),
+                    new SqlCastExpression(operandSql, resultType, typeMapping.StoreType),
                     typeMapping);
             }
 
