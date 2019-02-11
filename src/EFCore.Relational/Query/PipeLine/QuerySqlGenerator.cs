@@ -222,6 +222,13 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                     _relationalCommandBuilder.Append(sqlFragmentExpression.Sql);
 
                     return sqlFragmentExpression;
+
+                case IsNullExpression isNullExpression:
+                    Visit(isNullExpression.Expression);
+
+                    _relationalCommandBuilder.Append($" IS {(isNullExpression.Negated ? "NOT" : "")} NULL");
+
+                    return isNullExpression;
             }
 
             return base.VisitExtension(extensionExpression);

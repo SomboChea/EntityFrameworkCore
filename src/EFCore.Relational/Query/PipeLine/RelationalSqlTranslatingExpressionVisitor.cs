@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
@@ -99,13 +98,86 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             return _methodCallTranslatorProvider.Translate(updatedMethodCallExpression);
         }
 
+        private static readonly MethodInfo _stringConcatObjectMethodInfo
+            = typeof(string).GetMethod(nameof(string.Concat), new[] { typeof(object), typeof(object) });
+
+        private static readonly MethodInfo _stringConcatStringMethodInfo
+            = typeof(string).GetMethod(nameof(string.Concat), new[] { typeof(string), typeof(string) });
+
+        private SqlExpression ConvertToString(Expression expression)
+        {
+            if (expression is UnaryExpression unaryExpression
+                && unaryExpression.NodeType == ExpressionType.Convert
+                && unaryExpression.Type == typeof(object))
+            {
+                expression = unaryExpression.Operand;
+            }
+
+            var sqlExpression = expression is SqlExpression
+                ? (SqlExpression)expression
+                : new SqlExpression(expression, _typeMappingSource.FindMapping(expression.Type));
+
+
+            if (sqlExpression.Type != typeof(string))
+            {
+                var stringTypeMapping = _typeMappingSource.FindMapping(typeof(string));
+
+                sqlExpression = new SqlExpression(
+                    new SqlCastExpression(sqlExpression, sqlExpression.Type, stringTypeMapping.StoreType),
+                    stringTypeMapping);
+            }
+
+            return sqlExpression;
+        }
+
         protected override Expression VisitBinary(BinaryExpression binaryExpression)
         {
-            var newExpression = base.VisitBinary(binaryExpression);
+            var left = Visit(binaryExpression.Left);
+            var right = Visit(binaryExpression.Right);
 
-            newExpression = _typeInference.Visit(newExpression);
+            if (binaryExpression.NodeType == ExpressionType.Add
+                && (_stringConcatObjectMethodInfo.Equals(binaryExpression.Method)
+                    || _stringConcatStringMethodInfo.Equals(binaryExpression.Method)))
+            {
+                left = ConvertToString(left);
+                right = ConvertToString(right);
 
-            return newExpression;
+                return new SqlExpression(
+                    binaryExpression.Update(left, VisitAndConvert(binaryExpression.Conversion, "VisitBinary"), right),
+                    _typeMappingSource.FindMapping(typeof(string)));
+            }
+            else if (binaryExpression.NodeType == ExpressionType.Equal
+                    || binaryExpression.NodeType == ExpressionType.NotEqual)
+            {
+                // Convert null comparison
+                var nullComparison = TransformNullComparison(left, right, binaryExpression.NodeType);
+
+                if (nullComparison != null)
+                {
+                    return nullComparison;
+                }
+            }
+
+            var newExpression = binaryExpression.Update(
+                left, VisitAndConvert(binaryExpression.Conversion, "VisitBinary"), right);
+
+            return _typeInference.Visit(newExpression);
+        }
+
+        private static Expression TransformNullComparison(Expression left, Expression right, ExpressionType expressionType)
+        {
+            var isLeftNullConstant = left is ConstantExpression leftConstant && leftConstant.Value == null;
+            var isRightNullConstant = right is ConstantExpression rightConstant && rightConstant.Value == null;
+
+            if ((isLeftNullConstant || isRightNullConstant)
+                && ((isLeftNullConstant ? right : left) is SqlExpression sqlExpression))
+            {
+                return new SqlExpression(
+                    new IsNullExpression(sqlExpression, expressionType == ExpressionType.NotEqual),
+                    true);
+            }
+
+            return null;
         }
 
         protected override Expression VisitExtension(Expression extensionExpression)
@@ -118,84 +190,46 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             return base.VisitExtension(extensionExpression);
         }
 
+        protected override Expression VisitNew(NewExpression newExpression)
+        {
+            if (newExpression.Members == null
+                || newExpression.Arguments.Count == 0)
+            {
+                return null;
+            }
+
+            var bindings = new Expression[newExpression.Arguments.Count];
+
+            for (var i = 0; i < bindings.Length; i++)
+            {
+                var translation = Visit(newExpression.Arguments[i]);
+
+                if (translation == null)
+                {
+                    return null;
+                }
+
+                bindings[i] = translation;
+            }
+
+            return Expression.Constant(bindings);
+        }
+
         protected override Expression VisitUnary(UnaryExpression unaryExpression)
         {
             var operand = Visit(unaryExpression.Operand);
 
-            if (operand is SqlExpression
+            if (operand is SqlExpression operandSql
                 && unaryExpression.Type != typeof(object)
                 && unaryExpression.NodeType == ExpressionType.Convert)
             {
                 var typeMapping = _typeMappingSource.FindMapping(unaryExpression.Type);
                 return new SqlExpression(
-                    new SqlCastExpression(operand, unaryExpression.Type, typeMapping.StoreType),
+                    new SqlCastExpression(operandSql, unaryExpression.Type, typeMapping.StoreType),
                     typeMapping);
             }
 
             return unaryExpression.Update(operand);
-        }
-    }
-
-    public class RelationalMethodCallTranslatorProvider : IMethodCallTranslatorProvider
-    {
-        private readonly List<IMethodCallTranslator> _methodCallTranslators = new List<IMethodCallTranslator>();
-
-        public RelationalMethodCallTranslatorProvider()
-        {
-            _methodCallTranslators.AddRange(
-                new[] {
-                    new EqualsTranslator()
-                });
-        }
-
-        public Expression Translate(MethodCallExpression methodCallExpression)
-        {
-            return _methodCallTranslators.Select(t => t.Translate(methodCallExpression)).FirstOrDefault(t => t != null);
-        }
-
-        protected virtual void AddTranslators(IEnumerable<IMethodCallTranslator> translators)
-            => _methodCallTranslators.InsertRange(0, translators);
-    }
-
-    public class EqualsTranslator : IMethodCallTranslator
-    {
-        public Expression Translate(MethodCallExpression methodCallExpression)
-        {
-            Expression left = null;
-            Expression right = null;
-            if (methodCallExpression.Method.Name == nameof(object.Equals)
-                && methodCallExpression.Arguments.Count == 1
-                && methodCallExpression.Object != null)
-            {
-                left = methodCallExpression.Object;
-                right = methodCallExpression.Arguments[0];
-            }
-            else if (methodCallExpression.Method.Name == nameof(object.Equals)
-                && methodCallExpression.Arguments.Count == 2
-                && methodCallExpression.Arguments[0].Type == methodCallExpression.Arguments[1].Type)
-            {
-                left = methodCallExpression.Arguments[0];
-                right = methodCallExpression.Arguments[1];
-            }
-
-            if (left != null && right != null && left.Type == right.Type)
-            {
-                if (left is SqlExpression leftSql)
-                {
-                    if (!(right is SqlExpression))
-                    {
-                        right = new SqlExpression(right, leftSql.TypeMapping);
-                    }
-                }
-                else if (right is SqlExpression rightSql)
-                {
-                    left = new SqlExpression(left, rightSql.TypeMapping);
-                }
-
-                return new SqlExpression(Expression.Equal(left, right), true);
-            }
-
-            return null;
         }
     }
 }

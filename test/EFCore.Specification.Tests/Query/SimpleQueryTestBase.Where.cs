@@ -1453,7 +1453,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 ps => ps.Where(p => !(p.Discontinued && (p.ProductID < 20))), entryCount: 74);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_complex_negated_expression_optimized(bool isAsync)
         {
@@ -1611,6 +1611,26 @@ namespace Microsoft.EntityFrameworkCore.Query
 
         [ConditionalTheory]
         [MemberData(nameof(IsAsyncData))]
+        public virtual Task Where_concat_string_int_comparison4(bool isAsync)
+        {
+            return AssertQuery<Order>(
+                isAsync,
+                os => os.Where(o => o.OrderID + o.CustomerID == o.CustomerID).Select(c => c.CustomerID));
+        }
+
+        [ConditionalTheory]
+        [MemberData(nameof(IsAsyncData))]
+        public virtual Task Where_concat_string_string_comparison(bool isAsync)
+        {
+            var i = "A";
+
+            return AssertQuery<Customer>(
+                isAsync,
+                cs => cs.Where(c => i + c.CustomerID == c.CompanyName).Select(c => c.CustomerID));
+        }
+
+        [ConditionalTheory]
+        [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_ternary_boolean_condition_true(bool isAsync)
         {
             var flag = true;
@@ -1719,7 +1739,7 @@ namespace Microsoft.EntityFrameworkCore.Query
         //         AssertQuery<Customer>(cs => cs.Select(c => c != alfki)));
         // }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_constructed_equal(bool isAsync)
         {
@@ -1735,7 +1755,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                     }));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_constructed_multi_value_equal(bool isAsync)
         {
@@ -1753,7 +1773,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                     }));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_constructed_multi_value_not_equal(bool isAsync)
         {
@@ -1772,7 +1792,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 91);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_tuple_constructed_equal(bool isAsync)
         {
@@ -1781,7 +1801,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 cs => cs.Where(c => new Tuple<string>(c.City) == new Tuple<string>("London")));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_tuple_constructed_multi_value_equal(bool isAsync)
         {
@@ -1790,7 +1810,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 cs => cs.Where(c => new Tuple<string, string>(c.City, c.Country) == new Tuple<string, string>("London", "UK")));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_tuple_constructed_multi_value_not_equal(bool isAsync)
         {
@@ -1800,7 +1820,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 91);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_tuple_create_constructed_equal(bool isAsync)
         {
@@ -1809,7 +1829,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 cs => cs.Where(c => Tuple.Create(c.City) == Tuple.Create("London")));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_tuple_create_constructed_multi_value_equal(bool isAsync)
         {
@@ -1818,7 +1838,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 cs => cs.Where(c => Tuple.Create(c.City, c.Country) == Tuple.Create("London", "UK")));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#7")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_compare_tuple_create_constructed_multi_value_not_equal(bool isAsync)
         {

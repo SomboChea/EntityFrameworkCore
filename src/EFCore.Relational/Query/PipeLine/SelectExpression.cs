@@ -89,7 +89,12 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
         public void ApplyProjection(IDictionary<ProjectionMember, Expression> projectionMapping)
         {
-            _projectionMapping = projectionMapping;
+            _projectionMapping.Clear();
+
+            foreach (var kvp in projectionMapping)
+            {
+                _projectionMapping[kvp.Key] = kvp.Value;
+            }
         }
 
         public Expression GetProjectionExpression(ProjectionMember projectionMember)

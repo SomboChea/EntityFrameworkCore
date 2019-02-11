@@ -28,7 +28,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
         public Expression Expression { get; }
         public bool IsCondition { get; }
-        public override Type Type => Expression.Type;
+        public override Type Type => TypeMapping?.ClrType ?? Expression.Type;
         public override ExpressionType NodeType => ExpressionType.Extension;
     }
 }

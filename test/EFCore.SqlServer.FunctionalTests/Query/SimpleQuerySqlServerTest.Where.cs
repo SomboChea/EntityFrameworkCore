@@ -1396,6 +1396,20 @@ FROM [Customers] AS [c]
 WHERE (((CAST(@__p_0 AS nvarchar(max)) + [c].[CustomerID]) + CAST(@__j_1 AS nvarchar(max))) + CAST(42 AS nvarchar(max))) = [c].[CompanyName]");
         }
 
+        public override async Task Where_concat_string_int_comparison4(bool isAsync)
+        {
+            await base.Where_concat_string_int_comparison4(isAsync);
+
+            AssertSql(" ");
+        }
+
+        public override async Task Where_concat_string_string_comparison(bool isAsync)
+        {
+            await base.Where_concat_string_string_comparison(isAsync);
+
+            AssertSql(" ");
+        }
+
         public override async Task Where_ternary_boolean_condition_true(bool isAsync)
         {
             await base.Where_ternary_boolean_condition_true(isAsync);

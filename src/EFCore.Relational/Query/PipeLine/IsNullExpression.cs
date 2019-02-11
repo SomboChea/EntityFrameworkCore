@@ -6,21 +6,19 @@ using System.Linq.Expressions;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
-    public class SqlCastExpression : Expression
+    public class IsNullExpression : Expression
     {
-
-        public SqlCastExpression(SqlExpression expression, Type type, string storeType)
+        public IsNullExpression(SqlExpression expression, bool negated = false)
         {
             Expression = expression;
-            Type = type;
-            StoreType = storeType;
+            Negated = negated;
         }
 
+        public SqlExpression Expression { get; }
+        public bool Negated { get; }
 
         public override ExpressionType NodeType => ExpressionType.Extension;
 
-        public SqlExpression Expression { get; }
-        public override Type Type { get; }
-        public string StoreType { get; }
+        public override Type Type => typeof(bool);
     }
 }
