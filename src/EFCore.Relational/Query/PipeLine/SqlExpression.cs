@@ -21,14 +21,13 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             Expression = expression;
             IsCondition = condition;
             TypeMapping = null;
-            Type = typeof(bool);
         }
 
         public RelationalTypeMapping TypeMapping { get; }
 
         public Expression Expression { get; }
         public bool IsCondition { get; }
-        public override Type Type => Expression.Type;
+        public override Type Type => IsCondition ? typeof(bool) : Expression.Type;
         public override ExpressionType NodeType => ExpressionType.Extension;
     }
 }

@@ -1088,7 +1088,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 91);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_null_is_not_null(bool isAsync)
         {
@@ -1098,7 +1098,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 cs => cs.Where(c => null != null));
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_constant_is_not_null(bool isAsync)
         {
