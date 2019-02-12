@@ -15,16 +15,20 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
     public class RelationalSqlTranslatingExpressionVisitor : ExpressionVisitor
     {
         private readonly IRelationalTypeMappingSource _typeMappingSource;
+        private readonly IMemberTranslatorProvider _memberTranslatorProvider;
         private readonly IMethodCallTranslatorProvider _methodCallTranslatorProvider;
         private readonly TypeMappingInferringExpressionVisitor _typeInference;
 
         private SelectExpression _selectExpression;
 
         public RelationalSqlTranslatingExpressionVisitor(
-            IRelationalTypeMappingSource typeMappingSource, IMethodCallTranslatorProvider methodCallTranslatorProvider)
+            IRelationalTypeMappingSource typeMappingSource,
+            IMemberTranslatorProvider memberTranslatorProvider,
+            IMethodCallTranslatorProvider methodCallTranslatorProvider)
         {
             _typeInference = new TypeMappingInferringExpressionVisitor();
             _typeMappingSource = typeMappingSource;
+            _memberTranslatorProvider = memberTranslatorProvider;
             _methodCallTranslatorProvider = methodCallTranslatorProvider;
         }
 
@@ -62,7 +66,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 return _selectExpression.BindProperty(entityShaper.ValueBufferExpression, property);
             }
 
-            return memberExpression.Update(innerExpression);
+            return _memberTranslatorProvider.Translate(memberExpression.Update(innerExpression));
         }
 
         protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
@@ -94,9 +98,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 arguments[i] = Visit(methodCallExpression.Arguments[i]);
             }
 
-            var updatedMethodCallExpression = methodCallExpression.Update(@object, arguments);
-
-            return _methodCallTranslatorProvider.Translate(updatedMethodCallExpression);
+            return _methodCallTranslatorProvider.Translate(methodCallExpression.Update(@object, arguments));
         }
 
         private static readonly MethodInfo _stringConcatObjectMethodInfo

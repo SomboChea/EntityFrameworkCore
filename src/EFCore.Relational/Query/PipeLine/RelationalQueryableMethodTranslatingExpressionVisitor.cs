@@ -17,9 +17,13 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
         public RelationalQueryableMethodTranslatingExpressionVisitor(
             IRelationalTypeMappingSource typeMappingSource,
+            IMemberTranslatorProvider memberTranslatorProvider,
             IMethodCallTranslatorProvider methodCallTranslatorProvider)
         {
-            _sqlTranslator = new RelationalSqlTranslatingExpressionVisitor(typeMappingSource, methodCallTranslatorProvider);
+            _sqlTranslator = new RelationalSqlTranslatingExpressionVisitor(
+                typeMappingSource,
+                memberTranslatorProvider,
+                methodCallTranslatorProvider);
             _typeMappingSource = typeMappingSource;
         }
 

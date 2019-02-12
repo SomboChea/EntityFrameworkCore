@@ -15,7 +15,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             Instance = instance;
             FunctionName = functionName;
             Schema = schema;
-            Arguments = arguments.ToList();
+            Arguments = (arguments ?? Array.Empty<Expression>()).ToList();
             Type = type;
         }
 

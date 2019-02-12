@@ -1939,7 +1939,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 5);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#6")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_contains_on_navigation(bool isAsync)
         {

@@ -90,12 +90,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 .TryAdd<ICompiledQueryCacheKeyGenerator, SqlServerCompiledQueryCacheKeyGenerator>()
                 .TryAdd<IExecutionStrategyFactory, SqlServerExecutionStrategyFactory>()
                 .TryAdd<IQueryCompilationContextFactory, SqlServerQueryCompilationContextFactory>()
-                .TryAdd<IMemberTranslator, SqlServerCompositeMemberTranslator>()
+                .TryAdd<EntityFrameworkCore.Query.ExpressionTranslators.IMemberTranslator, SqlServerCompositeMemberTranslator>()
                 .TryAdd<ICompositeMethodCallTranslator, SqlServerCompositeMethodCallTranslator>()
                 .TryAdd<IQuerySqlGeneratorFactory, SqlServerQuerySqlGeneratorFactory>()
                 .TryAdd<ISqlTranslatingExpressionVisitorFactory, SqlServerSqlTranslatingExpressionVisitorFactory>()
                 .TryAdd<ISingletonOptions, ISqlServerOptions>(p => p.GetService<ISqlServerOptions>())
                 .TryAdd<IMethodCallTranslatorProvider, SqlServerMethodCallTranslatorProvider>()
+                .TryAdd<IMemberTranslatorProvider, SqlServerMemberTranslatorProvider>()
                 .TryAddProviderSpecificServices(
                     b => b
                         .TryAddSingleton<ISqlServerValueGeneratorCache, SqlServerValueGeneratorCache>()

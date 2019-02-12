@@ -77,7 +77,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
                 { typeof(ISqlTranslatingExpressionVisitorFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IUpdateSqlGenerator), new ServiceCharacteristics(ServiceLifetime.Scoped) },
                 { typeof(ISingletonUpdateSqlGenerator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-                { typeof(IMemberTranslator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
+                { typeof(Query.ExpressionTranslators.IMemberTranslator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(ICompositeMethodCallTranslator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IQuerySqlGeneratorFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IQuerySqlGeneratorFactory2), new ServiceCharacteristics(ServiceLifetime.Singleton) },
@@ -97,7 +97,8 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
                 { typeof(IRelationalTypeMappingSourcePlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
                 { typeof(IMethodCallTranslatorPlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
                 { typeof(IMemberTranslatorPlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
-                { typeof(IMethodCallTranslatorProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) }
+                { typeof(IMethodCallTranslatorProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) },
+                { typeof(IMemberTranslatorProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) }
             };
 
         /// <summary>
@@ -177,6 +178,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
             TryAdd<IEvaluatableExpressionFilter, RelationalEvaluatableExpressionFilter>();
             TryAdd<IRelationalTransactionFactory, RelationalTransactionFactory>();
             TryAdd<IMethodCallTranslatorProvider, RelationalMethodCallTranslatorProvider>();
+            TryAdd<IMemberTranslatorProvider, RelationalMemberTranslatorProvider>();
 
             TryAdd<ISingletonUpdateSqlGenerator>(
                 p =>
