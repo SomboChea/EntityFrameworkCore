@@ -2,19 +2,19 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
 {
     public class SqlServerMethodCallTranslatorProvider : RelationalMethodCallTranslatorProvider
     {
-        private static readonly IMethodCallTranslator[] _methodCallTranslators =
+        public SqlServerMethodCallTranslatorProvider(IRelationalTypeMappingSource typeMappingSource)
         {
-            new SqlServerStartsWithOptimizedTranslator()
-        };
-
-        public SqlServerMethodCallTranslatorProvider()
-        {
-            AddTranslators(_methodCallTranslators);
+            AddTranslators(new IMethodCallTranslator[]
+            {
+                new SqlServerMathTranslator(typeMappingSource),
+                new SqlServerNewGuidTranslator(typeMappingSource)
+            });
         }
     }
 }

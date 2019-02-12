@@ -722,7 +722,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 1);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_equals_using_object_overload_on_mismatched_types(bool isAsync)
         {
@@ -745,7 +745,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 1);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_equals_on_mismatched_types_nullable_int_long(bool isAsync)
         {
@@ -777,7 +777,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 5);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_equals_on_mismatched_types_nullable_long_nullable_int(bool isAsync)
         {
@@ -809,7 +809,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 5);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#8")]
         [MemberData(nameof(IsAsyncData))]
         public virtual async Task Where_equals_on_null_nullable_int_types(bool isAsync)
         {
@@ -1119,7 +1119,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 91);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#10")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_in_optimization_multiple(bool isAsync)
         {
@@ -1435,7 +1435,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 ps => ps.Where(p => p.Discontinued == ((p.ProductID > 50) != prm)), entryCount: 33);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_de_morgan_or_optimizated(bool isAsync)
         {
@@ -1444,7 +1444,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 ps => ps.Where(p => !(p.Discontinued || (p.ProductID < 20))), entryCount: 53);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#4")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_de_morgan_and_optimizated(bool isAsync)
         {
@@ -1561,7 +1561,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 22);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#9")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_expression_invoke(bool isAsync)
         {

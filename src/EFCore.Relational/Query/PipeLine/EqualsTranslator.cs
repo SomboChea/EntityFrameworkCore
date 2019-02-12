@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Linq.Expressions;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
@@ -16,34 +17,50 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 && methodCallExpression.Object != null)
             {
                 left = methodCallExpression.Object;
-                right = methodCallExpression.Arguments[0];
+                right = UnwrapObjectConvert(methodCallExpression.Arguments[0]);
             }
             else if (methodCallExpression.Method.Name == nameof(object.Equals)
                 && methodCallExpression.Arguments.Count == 2
                 && methodCallExpression.Arguments[0].Type == methodCallExpression.Arguments[1].Type)
             {
-                left = methodCallExpression.Arguments[0];
-                right = methodCallExpression.Arguments[1];
+                left = UnwrapObjectConvert(methodCallExpression.Arguments[0]);
+                right = UnwrapObjectConvert(methodCallExpression.Arguments[1]);
             }
 
-            if (left != null && right != null && left.Type == right.Type)
+            if (left != null && right != null)
             {
-                if (left is SqlExpression leftSql)
+                if (left.Type.UnwrapNullableType() == right.Type.UnwrapNullableType())
                 {
-                    if (!(right is SqlExpression))
+                    if (left is SqlExpression leftSql)
                     {
-                        right = new SqlExpression(right, leftSql.TypeMapping);
+                        if (!(right is SqlExpression))
+                        {
+                            right = new SqlExpression(right, leftSql.TypeMapping).ChangeTypeNullablility(left.Type.IsNullableType());
+                        }
                     }
-                }
-                else if (right is SqlExpression rightSql)
-                {
-                    left = new SqlExpression(left, rightSql.TypeMapping);
-                }
+                    else if (right is SqlExpression rightSql)
+                    {
+                        left = new SqlExpression(left, rightSql.TypeMapping).ChangeTypeNullablility(right.Type.IsNullableType());
+                    }
 
-                return new SqlExpression(Expression.Equal(left, right), true);
+                    return new SqlExpression(Expression.Equal(left, right));
+                }
+                else
+                {
+                    return Expression.Constant(false);
+                }
             }
 
             return null;
+        }
+
+        private static Expression UnwrapObjectConvert(Expression expression)
+        {
+            return expression is UnaryExpression unary
+                && expression.Type == typeof(object)
+                && expression.NodeType == ExpressionType.Convert
+                ? unary.Operand
+                : expression;
         }
     }
 }

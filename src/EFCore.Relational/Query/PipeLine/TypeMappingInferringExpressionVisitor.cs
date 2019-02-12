@@ -91,7 +91,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             return left is SqlExpression && right is SqlExpression
                 ? condition
-                    ? new SqlExpression(updatedBinaryExpression, condition)
+                    ? new SqlExpression(updatedBinaryExpression)
                     : new SqlExpression(updatedBinaryExpression, aggregateTypeMapping)
                 : (Expression)updatedBinaryExpression;
         }
@@ -105,7 +105,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             if (_condition)
             {
-                return new SqlExpression(constantExpression, true);
+                return new SqlExpression(constantExpression);
             }
 
             return constantExpression;
@@ -133,7 +133,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             if (_condition)
             {
-                return new SqlExpression(parameterExpression, true);
+                return new SqlExpression(parameterExpression);
             }
 
             return parameterExpression;

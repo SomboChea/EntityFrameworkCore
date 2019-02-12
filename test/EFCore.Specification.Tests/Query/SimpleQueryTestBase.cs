@@ -2433,7 +2433,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                     select c);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#11")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_join_select(bool isAsync)
         {
@@ -2462,7 +2462,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 88);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "TaskList#11")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_join_orderby_join_select(bool isAsync)
         {

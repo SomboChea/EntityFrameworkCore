@@ -8,11 +8,12 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
 {
     public class SqlServerMemberTranslatorProvider : RelationalMemberTranslatorProvider
     {
-        public SqlServerMemberTranslatorProvider(IRelationalTypeMappingSource relationalTypeMappingSource)
+        public SqlServerMemberTranslatorProvider(IRelationalTypeMappingSource typeMappingSource)
         {
             AddTranslators(
-                new[] {
-                    new SqlServerDateTimeMemberTranslator(relationalTypeMappingSource)
+                new IMemberTranslator[] {
+                    new SqlServerDateTimeMemberTranslator(typeMappingSource),
+                    new SqlServerStringLengthTranslator(typeMappingSource)
                 });
         }
     }

@@ -9,25 +9,38 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
     public class SqlExpression : Expression
     {
-        public SqlExpression(Expression expression, RelationalTypeMapping typeMapping)
+        public SqlExpression(Expression expression)
+            : this(expression, typeof(bool), null)
         {
-            Expression = expression;
-            TypeMapping = typeMapping;
-            IsCondition = false;
         }
 
-        public SqlExpression(Expression expression, bool condition)
+        public SqlExpression(Expression expression, RelationalTypeMapping typeMapping)
+            : this(expression, expression.Type, typeMapping)
+        {
+        }
+
+        private SqlExpression(Expression expression, Type type, RelationalTypeMapping typeMapping)
         {
             Expression = expression;
-            IsCondition = condition;
-            TypeMapping = null;
+            Type = type;
+            TypeMapping = typeMapping;
+            IsCondition = typeMapping == null;
+        }
+
+        public SqlExpression ChangeTypeNullablility(bool makeNullable)
+        {
+            var type = Type.IsNullableType()
+                ? (makeNullable ? Type : Type.UnwrapNullableType())
+                : (makeNullable ? Type.MakeNullable() : Type);
+
+            return new SqlExpression(Expression, type, TypeMapping);
         }
 
         public RelationalTypeMapping TypeMapping { get; }
 
         public Expression Expression { get; }
         public bool IsCondition { get; }
-        public override Type Type => IsCondition ? typeof(bool) : Expression.Type;
+        public override Type Type { get; }
         public override ExpressionType NodeType => ExpressionType.Extension;
     }
 }

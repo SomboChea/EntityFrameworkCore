@@ -81,7 +81,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             }
             else
             {
-                _predicate = new SqlExpression(AndAlso(_predicate, expression), true);
+                _predicate = new SqlExpression(AndAlso(_predicate, expression));
             }
         }
 

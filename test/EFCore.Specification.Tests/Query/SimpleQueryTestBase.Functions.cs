@@ -960,7 +960,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 13);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "Client Eval on SqlServer")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_math_max(bool isAsync)
         {
@@ -970,7 +970,7 @@ namespace Microsoft.EntityFrameworkCore.Query
                 entryCount: 25);
         }
 
-        [ConditionalTheory]
+        [ConditionalTheory(Skip = "Client Eval on SqlServer")]
         [MemberData(nameof(IsAsyncData))]
         public virtual Task Where_math_min(bool isAsync)
         {

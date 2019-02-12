@@ -47,7 +47,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 && !sqlExpression.IsCondition
                 && sqlExpression.TypeMapping == _typeMappingSource.FindMapping(typeof(bool)))
             {
-                sqlExpression = new SqlExpression(sqlExpression.Expression, true);
+                sqlExpression = new SqlExpression(sqlExpression.Expression);
             }
 
             _selectExpression = null;
@@ -64,6 +64,13 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 var property = entityType.FindProperty(memberExpression.Member.GetSimpleMemberName());
 
                 return _selectExpression.BindProperty(entityShaper.ValueBufferExpression, property);
+            }
+
+            if (memberExpression.Member.Name == nameof(Nullable<int>.Value)
+                && memberExpression.Member.DeclaringType.IsNullableType()
+                && innerExpression is SqlExpression sqlExpression)
+            {
+                return sqlExpression.ChangeTypeNullablility(makeNullable: false);
             }
 
             return _memberTranslatorProvider.Translate(memberExpression.Update(innerExpression));
@@ -175,9 +182,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             if ((isLeftNullConstant || isRightNullConstant)
                 && ((isLeftNullConstant ? right : left) is SqlExpression sqlExpression))
             {
-                return new SqlExpression(
-                    new IsNullExpression(sqlExpression, expressionType == ExpressionType.NotEqual),
-                    true);
+                return new SqlExpression(new IsNullExpression(sqlExpression, expressionType == ExpressionType.NotEqual));
             }
 
             return null;
