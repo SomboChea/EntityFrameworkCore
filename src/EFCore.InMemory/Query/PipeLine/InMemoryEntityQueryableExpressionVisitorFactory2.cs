@@ -1,23 +1,40 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query.PipeLine;
 
 namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
 {
-    public class InMemoryEntityQueryableExpressionVisitorFactory2 : IEntityQueryableExpressionVisitorFactory2
+    public class InMemoryEntityQueryableExpressionVisitorsFactory : EntityQueryableExpressionVisitorsFactory
     {
         private readonly IModel _model;
 
-        public InMemoryEntityQueryableExpressionVisitorFactory2(IModel model)
+        public InMemoryEntityQueryableExpressionVisitorsFactory(IModel model)
         {
             _model = model;
         }
 
-        public EntityQueryableExpressionVisitor2 Create()
+        public override EntityQueryableExpressionVisitors Create(QueryCompilationContext2 queryCompilationContext)
         {
-            return new InMemoryEntityQueryableExpressionVisitor2(_model);
+            return new InMemoryEntityQueryableExpressionVisitors(_model);
+        }
+    }
+
+    public class InMemoryEntityQueryableExpressionVisitors : EntityQueryableExpressionVisitors
+    {
+        private readonly IModel _model;
+
+        public InMemoryEntityQueryableExpressionVisitors(IModel model)
+        {
+            _model = model;
+        }
+
+        public override IEnumerable<ExpressionVisitor> GetVisitors()
+        {
+            yield return new InMemoryEntityQueryableExpressionVisitor2(_model);
         }
     }
 }

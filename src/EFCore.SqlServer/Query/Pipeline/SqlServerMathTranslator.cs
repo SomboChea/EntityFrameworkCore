@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine;
@@ -77,53 +78,48 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
                 var arguments = new SqlExpression[methodCallExpression.Arguments.Count];
                 for (var i = 0; i < arguments.Length; i++)
                 {
-                    var argument = methodCallExpression.Arguments[i];
-                    arguments[i] = argument is SqlExpression sqlArgument
-                        ? sqlArgument
-                        : new SqlExpression(argument, _typeMappingSource.FindMapping(argument.Type));
+                    arguments[i] = methodCallExpression.Arguments[i].ApplyDefaultTypeMapping(_typeMappingSource);
                 }
 
-                return new SqlExpression(
-                    new SqlFunctionExpression(
-                        null,
-                        sqlFunctionName,
-                        null,
-                        arguments,
-                        methodCallExpression.Type),
-                    _typeMappingSource.FindMapping(methodCallExpression.Type));
+                return new SqlFunctionExpression(
+                    null,
+                    sqlFunctionName,
+                    null,
+                    arguments,
+                    methodCallExpression.Type)
+                    .ApplyDefaultTypeMapping(_typeMappingSource);
             }
 
-            //if (_truncateMethodInfos.Contains(method))
-            //{
-            //    var firstArgument = methodCallExpression.Arguments[0];
+            if (_truncateMethodInfos.Contains(method))
+            {
+                return new SqlFunctionExpression(
+                    null,
+                    "ROUND",
+                    null,
+                    new[] {
+                        methodCallExpression.Arguments[0].ApplyDefaultTypeMapping(_typeMappingSource),
+                        ExpressionExtensions.MakeSqlConstant(0, _typeMappingSource),
+                        ExpressionExtensions.MakeSqlConstant(1, _typeMappingSource)
+                    },
+                    methodCallExpression.Type)
+                    .ApplyDefaultTypeMapping(_typeMappingSource);
+            }
 
-            //    if (firstArgument.NodeType == ExpressionType.Convert)
-            //    {
-            //        firstArgument = new ExplicitCastExpression(firstArgument, firstArgument.Type);
-            //    }
+            if (_roundMethodInfos.Contains(method))
+            {
+                var firstArgument = methodCallExpression.Arguments[0].ApplyDefaultTypeMapping(_typeMappingSource);
+                var secondArgument = methodCallExpression.Arguments.Count == 2
+                    ? methodCallExpression.Arguments[1].ApplyDefaultTypeMapping(_typeMappingSource)
+                    : ExpressionExtensions.MakeSqlConstant(0, _typeMappingSource);
 
-            //    return new SqlFunctionExpression(
-            //        "ROUND",
-            //        methodCallExpression.Type,
-            //        new[] { firstArgument, Expression.Constant(0), Expression.Constant(1) });
-            //}
-
-            //if (_roundMethodInfos.Contains(method))
-            //{
-            //    var firstArgument = methodCallExpression.Arguments[0];
-
-            //    if (firstArgument.NodeType == ExpressionType.Convert)
-            //    {
-            //        firstArgument = new ExplicitCastExpression(firstArgument, firstArgument.Type);
-            //    }
-
-            //    return new SqlFunctionExpression(
-            //        "ROUND",
-            //        methodCallExpression.Type,
-            //        methodCallExpression.Arguments.Count == 1
-            //            ? new[] { firstArgument, Expression.Constant(0) }
-            //            : new[] { firstArgument, methodCallExpression.Arguments[1] });
-            //}
+                return new SqlFunctionExpression(
+                    null,
+                    "ROUND",
+                    null,
+                    new[] { firstArgument, secondArgument },
+                    methodCallExpression.Type)
+                    .ApplyDefaultTypeMapping(_typeMappingSource);
+            }
 
             return null;
         }

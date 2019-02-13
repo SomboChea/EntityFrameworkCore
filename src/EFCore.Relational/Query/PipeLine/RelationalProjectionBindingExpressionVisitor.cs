@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
@@ -48,8 +49,10 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 return null;
             }
 
-            if (!(expression is NewExpression))
+            if (!(expression is NewExpression
+                  || expression is EntityShaperExpression))
             {
+
                 var translation = _sqlTranslator.Translate(_selectExpression, expression, false);
 
                 if (!(translation is SqlExpression))
@@ -63,6 +66,25 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             }
 
             return base.Visit(expression);
+        }
+
+        protected override Expression VisitExtension(Expression node)
+        {
+            if (node is EntityShaperExpression entityShaperExpression)
+            {
+                _projectionMapping[_projectionMembers.Peek()]
+                    = _selectExpression.GetProjectionExpression(
+                        entityShaperExpression.ValueBufferExpression.ProjectionMember);
+
+                return new EntityShaperExpression(
+                    entityShaperExpression.EntityType,
+                    new ProjectionBindingExpression(
+                        _selectExpression,
+                        _projectionMembers.Peek(),
+                        typeof(ValueBuffer)));
+            }
+
+            throw new InvalidOperationException();
         }
 
         protected override Expression VisitNew(NewExpression newExpression)

@@ -60,20 +60,16 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             var selectExpression = (SelectExpression)source.QueryExpression;
 
-            var translation = new SqlExpression(
-                new SqlFunctionExpression(
+            var translation = new SqlFunctionExpression(
                     null,
                     "COUNT",
                     null,
                     new[]
                     {
-                        new SqlExpression(
-                            new SqlFragmentExpression("*", typeof(object)),
-                            _typeMappingSource.FindMapping(typeof(string)))
+                        new SqlFragmentExpression("*")
                     },
-                    typeof(int)),
-                _typeMappingSource.FindMapping(typeof(int))
-                );
+                    typeof(int))
+                    .ApplyDefaultTypeMapping(_typeMappingSource);
 
             var _projectionMapping = new Dictionary<ProjectionMember, Expression>
             {
@@ -108,8 +104,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             var selectExpression = (SelectExpression)source.QueryExpression;
 
-            selectExpression.ApplyLimit(
-                new SqlExpression(Expression.Constant(1), _typeMappingSource.FindMapping(typeof(int))));
+            selectExpression.ApplyLimit(Expression.Constant(1).ApplyTypeMapping(_typeMappingSource.FindMapping(typeof(int))));
 
             return source;
         }
@@ -133,8 +128,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             selectExpression.Reverse();
 
-            selectExpression.ApplyLimit(
-                new SqlExpression(Expression.Constant(1), _typeMappingSource.FindMapping(typeof(int))));
+            selectExpression.ApplyLimit(Expression.Constant(1).ApplyTypeMapping(_typeMappingSource.FindMapping(typeof(int))));
 
             return source;
         }
@@ -198,8 +192,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             var selectExpression = (SelectExpression)source.QueryExpression;
 
-            selectExpression.ApplyLimit(
-                new SqlExpression(Expression.Constant(1), _typeMappingSource.FindMapping(typeof(int))));
+            selectExpression.ApplyLimit(Expression.Constant(1).ApplyTypeMapping(_typeMappingSource.FindMapping(typeof(int))));
 
             return source;
         }

@@ -13,7 +13,8 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
             AddTranslators(new IMethodCallTranslator[]
             {
                 new SqlServerMathTranslator(typeMappingSource),
-                new SqlServerNewGuidTranslator(typeMappingSource)
+                new SqlServerNewGuidTranslator(typeMappingSource),
+                new SqlServerStringMethodTranslator(typeMappingSource)
             });
         }
     }

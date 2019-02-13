@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             _methodCallTranslatorProvider = methodCallTranslatorProvider;
         }
 
-        public QueryableMethodTranslatingExpressionVisitor Create(IDictionary<Expression, Expression> parameterBindings)
+        public QueryableMethodTranslatingExpressionVisitor Create(QueryCompilationContext2 queryCompilationContext)
         {
             return new RelationalQueryableMethodTranslatingExpressionVisitor(
                 _typeMappingSource,

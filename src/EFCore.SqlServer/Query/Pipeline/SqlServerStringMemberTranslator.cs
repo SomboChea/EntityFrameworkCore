@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
 {
-    public class SqlServerStringLengthTranslator : IMemberTranslator
+    public class SqlServerStringMemberTranslator : IMemberTranslator
     {
         private readonly IRelationalTypeMappingSource _typeMappingSource;
 
-        public SqlServerStringLengthTranslator(IRelationalTypeMappingSource typeMappingSource)
+        public SqlServerStringMemberTranslator(IRelationalTypeMappingSource typeMappingSource)
         {
             _typeMappingSource = typeMappingSource;
         }
@@ -22,21 +22,15 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
                 && sql.Type == typeof(string)
                 && memberExpression.Member.Name == nameof(string.Length))
             {
-                var intTypeMapping = _typeMappingSource.FindMapping(typeof(int));
-
-                return new SqlExpression(
-                    new SqlCastExpression(
-                        new SqlExpression(
-                            new SqlFunctionExpression(
-                                null,
-                                "LEN",
-                                null,
-                                new[] { sql },
-                                memberExpression.Type),
-                            intTypeMapping),
-                        memberExpression.Type,
-                        intTypeMapping.StoreType),
-                    intTypeMapping);
+                return new SqlCastExpression(
+                    new SqlFunctionExpression(
+                        null,
+                        "LEN",
+                        null,
+                        new[] { sql },
+                        memberExpression.Type)
+                        .ApplyDefaultTypeMapping(_typeMappingSource),
+                    memberExpression.Type);
             }
 
             return null;

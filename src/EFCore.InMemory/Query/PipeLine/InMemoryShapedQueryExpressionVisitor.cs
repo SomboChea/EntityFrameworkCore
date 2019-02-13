@@ -15,9 +15,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
 {
-    public class InMemoryShapedQueryExpressionVisitor : ShapedQueryExpressionVisitor
+    public class InMemoryShapedQueryCompilingExpressionVisitor : ShapedQueryCompilingExpressionVisitor
     {
-        public InMemoryShapedQueryExpressionVisitor(IEntityMaterializerSource entityMaterializerSource)
+        public InMemoryShapedQueryCompilingExpressionVisitor(IEntityMaterializerSource entityMaterializerSource)
             : base(entityMaterializerSource)
         {
         }
@@ -67,7 +67,7 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
         }
 
         private static readonly MethodInfo _queryMethodInfo
-            = typeof(InMemoryShapedQueryExpressionVisitor).GetTypeInfo()
+            = typeof(InMemoryShapedQueryCompilingExpressionVisitor).GetTypeInfo()
                 .GetDeclaredMethod(nameof(Query));
 
         private static IEnumerable<ValueBuffer> Query(
@@ -80,7 +80,7 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
         }
 
         private static readonly MethodInfo _shapeMethodInfo
-            = typeof(InMemoryShapedQueryExpressionVisitor).GetTypeInfo().GetDeclaredMethod(nameof(_Shape));
+            = typeof(InMemoryShapedQueryCompilingExpressionVisitor).GetTypeInfo().GetDeclaredMethod(nameof(_Shape));
 
         private static IEnumerable<TResult> _Shape<TIn, TResult>(
             IEnumerable<TIn> innerEnumerable,

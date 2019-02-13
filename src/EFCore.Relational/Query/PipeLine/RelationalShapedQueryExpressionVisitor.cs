@@ -17,11 +17,11 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
-    public class RelationalShapedQueryExpressionVisitor : ShapedQueryExpressionVisitor
+    public class RelationalShapedQueryCompilingExpressionVisitor : ShapedQueryCompilingExpressionVisitor
     {
         private readonly IQuerySqlGeneratorFactory2 _querySqlGeneratorFactory;
 
-        public RelationalShapedQueryExpressionVisitor(
+        public RelationalShapedQueryCompilingExpressionVisitor(
             IEntityMaterializerSource entityMaterializerSource,
             IQuerySqlGeneratorFactory2 querySqlGeneratorFactory)
             : base(entityMaterializerSource)
@@ -34,8 +34,12 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             var shaperLambda = InjectEntityMaterializer(shapedQueryExpression.ShaperExpression);
             var selectExpression = (SelectExpression)shapedQueryExpression.QueryExpression;
 
-            var newBody = new RelationalProjectionBindingRemovingExpressionVisitor(selectExpression)
+            var projectionIndexMapping = selectExpression.ApplyProjection();
+
+            var newBody = new RelationalProjectionBindingRemovingExpressionVisitor(selectExpression, projectionIndexMapping)
                 .Visit(shaperLambda.Body);
+
+
 
             shaperLambda = Expression.Lambda(
                 newBody,
@@ -147,10 +151,12 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 = new Dictionary<ParameterExpression, int>();
             private readonly IDictionary<ProjectionMember, int> _projectionIndexMapping;
 
-            public RelationalProjectionBindingRemovingExpressionVisitor(SelectExpression selectExpression)
+            public RelationalProjectionBindingRemovingExpressionVisitor(
+                SelectExpression selectExpression,
+                IDictionary<ProjectionMember, int> projectionIndexMapping)
             {
-                _projectionIndexMapping = selectExpression.ApplyProjection();
                 _selectExpression = selectExpression;
+                _projectionIndexMapping = projectionIndexMapping;
             }
 
             protected override Expression VisitBinary(BinaryExpression binaryExpression)

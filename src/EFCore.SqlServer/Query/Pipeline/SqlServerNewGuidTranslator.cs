@@ -22,14 +22,12 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
         public Expression Translate(MethodCallExpression methodCallExpression)
         {
             return _methodInfo.Equals(methodCallExpression.Method)
-                ? new SqlExpression(
-                    new SqlFunctionExpression(
-                        null,
-                        "NEWID",
-                        null,
-                        null,
-                        methodCallExpression.Type),
-                    _typeMappingSource.FindMapping(methodCallExpression.Type))
+                ? new SqlFunctionExpression(
+                    null,
+                    "NEWID",
+                    null,
+                    null,
+                    methodCallExpression.Type).ApplyDefaultTypeMapping(_typeMappingSource)
                 : null;
         }
     }

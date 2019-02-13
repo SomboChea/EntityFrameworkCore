@@ -13,17 +13,10 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
 {
     public class InMemoryQueryableMethodTranslatingExpressionVisitor : QueryableMethodTranslatingExpressionVisitor
     {
-        private readonly InMemoryQueryableMethodTranslatingExpressionVisitorFactory _inMemoryQueryableMethodTranslatingExpressionVisitorFactory;
-        private readonly IDictionary<Expression, Expression> _parameterBindings;
-
         private readonly InMemoryExpressionTranslatingExpressionVisitor _expressionTranslator;
 
-        public InMemoryQueryableMethodTranslatingExpressionVisitor(
-            InMemoryQueryableMethodTranslatingExpressionVisitorFactory inMemoryQueryableMethodTranslatingExpressionVisitorFactory,
-            IDictionary<Expression, Expression> parameterBindings)
+        public InMemoryQueryableMethodTranslatingExpressionVisitor()
         {
-            _inMemoryQueryableMethodTranslatingExpressionVisitorFactory = inMemoryQueryableMethodTranslatingExpressionVisitorFactory;
-            _parameterBindings = parameterBindings;
             _expressionTranslator = new InMemoryExpressionTranslatingExpressionVisitor();
         }
 

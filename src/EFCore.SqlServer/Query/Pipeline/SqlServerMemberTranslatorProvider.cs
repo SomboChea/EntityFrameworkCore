@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
             AddTranslators(
                 new IMemberTranslator[] {
                     new SqlServerDateTimeMemberTranslator(typeMappingSource),
-                    new SqlServerStringLengthTranslator(typeMappingSource)
+                    new SqlServerStringMemberTranslator(typeMappingSource)
                 });
         }
     }

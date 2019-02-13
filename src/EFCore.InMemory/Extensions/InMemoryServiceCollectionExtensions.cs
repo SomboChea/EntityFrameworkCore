@@ -13,7 +13,6 @@ using Microsoft.EntityFrameworkCore.InMemory.ValueGeneration.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query.PipeLine;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
@@ -69,9 +68,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 .TryAdd<IQueryContextFactory, InMemoryQueryContextFactory>()
                 .TryAdd<IEntityQueryModelVisitorFactory, InMemoryQueryModelVisitorFactory>()
                 .TryAdd<IEntityQueryableExpressionVisitorFactory, InMemoryEntityQueryableExpressionVisitorFactory>()
-                .TryAdd<IEntityQueryableExpressionVisitorFactory2, InMemoryEntityQueryableExpressionVisitorFactory2>()
-                .TryAdd<IShapedQueryExpressionVisitorFactory, InMemoryShapedQueryExpressionVisitorFactory>()
+
+                // New Query pipeline
+                .TryAdd<IShapedQueryCompilingExpressionVisitorFactory, InMemoryShapedQueryCompilingExpressionVisitorFactory>()
                 .TryAdd<IQueryableMethodTranslatingExpressionVisitorFactory, InMemoryQueryableMethodTranslatingExpressionVisitorFactory>()
+                .TryAdd<IEntityQueryableExpressionVisitorsFactory, InMemoryEntityQueryableExpressionVisitorsFactory>()
+
+
                 .TryAdd<IConventionSetBuilder, InMemoryConventionSetBuilder>()
                 .TryAdd<ISingletonOptions, IInMemorySingletonOptions>(p => p.GetService<IInMemorySingletonOptions>())
                 .TryAdd<ITypeMappingSource, InMemoryTypeMappingSource>()

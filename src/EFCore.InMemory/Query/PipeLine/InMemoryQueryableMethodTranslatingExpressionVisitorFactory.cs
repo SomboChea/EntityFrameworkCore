@@ -9,9 +9,9 @@ namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
 {
     public class InMemoryQueryableMethodTranslatingExpressionVisitorFactory : IQueryableMethodTranslatingExpressionVisitorFactory
     {
-        public QueryableMethodTranslatingExpressionVisitor Create(IDictionary<Expression, Expression> parameterBindings)
+        public QueryableMethodTranslatingExpressionVisitor Create(QueryCompilationContext2 queryCompilationContext)
         {
-            return new InMemoryQueryableMethodTranslatingExpressionVisitor(this, parameterBindings);
+            return new InMemoryQueryableMethodTranslatingExpressionVisitor();
         }
     }
 

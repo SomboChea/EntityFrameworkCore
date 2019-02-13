@@ -6,18 +6,18 @@ using Microsoft.EntityFrameworkCore.Query.PipeLine;
 
 namespace Microsoft.EntityFrameworkCore.InMemory.Query.PipeLine
 {
-    public class InMemoryShapedQueryExpressionVisitorFactory : IShapedQueryExpressionVisitorFactory
+    public class InMemoryShapedQueryCompilingExpressionVisitorFactory : IShapedQueryCompilingExpressionVisitorFactory
     {
         private readonly IEntityMaterializerSource _entityMaterializerSource;
 
-        public InMemoryShapedQueryExpressionVisitorFactory(IEntityMaterializerSource entityMaterializerSource)
+        public InMemoryShapedQueryCompilingExpressionVisitorFactory(IEntityMaterializerSource entityMaterializerSource)
         {
             _entityMaterializerSource = entityMaterializerSource;
         }
 
-        public ShapedQueryExpressionVisitor Create()
+        public ShapedQueryCompilingExpressionVisitor Create(QueryCompilationContext2 queryCompilationContext)
         {
-            return new InMemoryShapedQueryExpressionVisitor(_entityMaterializerSource);
+            return new InMemoryShapedQueryCompilingExpressionVisitor(_entityMaterializerSource);
         }
     }
 

@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Query.PipeLine
 {
     public class EntityShaperExpression : Expression
     {
-        public EntityShaperExpression(IEntityType entityType, Expression valueBufferExpression)
+        public EntityShaperExpression(IEntityType entityType, ProjectionBindingExpression valueBufferExpression)
         {
             EntityType = entityType;
             ValueBufferExpression = valueBufferExpression;
@@ -20,7 +20,7 @@ namespace Microsoft.EntityFrameworkCore.Query.PipeLine
         public override ExpressionType NodeType => ExpressionType.Extension;
 
         public IEntityType EntityType { get; }
-        public Expression ValueBufferExpression { get; }
+        public ProjectionBindingExpression ValueBufferExpression { get; }
     }
 
 }

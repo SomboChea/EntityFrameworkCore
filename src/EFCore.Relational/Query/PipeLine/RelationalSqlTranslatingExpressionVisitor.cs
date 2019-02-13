@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -40,7 +41,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             if (!(translation is SqlExpression sqlExpression))
             {
-                sqlExpression = new SqlExpression(translation, _typeMappingSource.FindMapping(translation.Type));
+                sqlExpression = translation.ApplyDefaultTypeMapping(_typeMappingSource);
             }
 
             if (condition
@@ -114,7 +115,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
         private static readonly MethodInfo _stringConcatStringMethodInfo
             = typeof(string).GetMethod(nameof(string.Concat), new[] { typeof(string), typeof(string) });
 
-        private SqlExpression ConvertToString(Expression expression)
+        private SqlExpression ConvertToString(Expression expression, RelationalTypeMapping stringTypeMapping)
         {
             if (expression is UnaryExpression unaryExpression
                 && unaryExpression.NodeType == ExpressionType.Convert
@@ -123,21 +124,16 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 expression = unaryExpression.Operand;
             }
 
-            var sqlExpression = expression is SqlExpression
-                ? (SqlExpression)expression
-                : new SqlExpression(expression, _typeMappingSource.FindMapping(expression.Type));
-
-
-            if (sqlExpression.Type != typeof(string))
+            if (expression.Type != typeof(string))
             {
-                var stringTypeMapping = _typeMappingSource.FindMapping(typeof(string));
-
-                sqlExpression = new SqlExpression(
-                    new SqlCastExpression(sqlExpression, stringTypeMapping.ClrType, stringTypeMapping.StoreType),
-                    stringTypeMapping);
+                expression = new SqlCastExpression(expression, typeof(string));
             }
 
-            return sqlExpression;
+            return expression is SqlExpression sql
+                ? sql
+                : new SqlExpression(
+                    expression,
+                    stringTypeMapping);
         }
 
         protected override Expression VisitBinary(BinaryExpression binaryExpression)
@@ -149,12 +145,16 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 && (_stringConcatObjectMethodInfo.Equals(binaryExpression.Method)
                     || _stringConcatStringMethodInfo.Equals(binaryExpression.Method)))
             {
-                left = ConvertToString(left);
-                right = ConvertToString(right);
+                var stringTypeMapping = ExpressionExtensions.InferTypeMapping(left, right);
+
+                Debug.Assert(stringTypeMapping != null);
+
+                left = ConvertToString(left, stringTypeMapping);
+                right = ConvertToString(right, stringTypeMapping);
 
                 return new SqlExpression(
                     binaryExpression.Update(left, VisitAndConvert(binaryExpression.Conversion, "VisitBinary"), right),
-                    _typeMappingSource.FindMapping(typeof(string)));
+                    stringTypeMapping);
             }
             else if (binaryExpression.NodeType == ExpressionType.Equal
                     || binaryExpression.NodeType == ExpressionType.NotEqual)
@@ -231,17 +231,9 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 && unaryExpression.Type != typeof(object)
                 && unaryExpression.NodeType == ExpressionType.Convert)
             {
-                var typeMapping = _typeMappingSource.FindMapping(unaryExpression.Type);
-                var resultType = typeMapping.ClrType;
-
-                if (unaryExpression.Type.IsNullableType())
-                {
-                    resultType = resultType.MakeNullable();
-                }
-
-                return new SqlExpression(
-                    new SqlCastExpression(operandSql, resultType, typeMapping.StoreType),
-                    typeMapping);
+                return new SqlCastExpression(
+                    operandSql,
+                    unaryExpression.Type);
             }
 
             return unaryExpression.Update(operand);

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Query.PipeLine
 {
-    public abstract class ShapedQueryExpressionVisitor : ExpressionVisitor
+    public abstract class ShapedQueryCompilingExpressionVisitor : ExpressionVisitor
     {
         private static MethodInfo _singleMethodInfo
             = typeof(Enumerable).GetTypeInfo().GetDeclaredMethods(nameof(Enumerable.Single))
@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.Query.PipeLine
 
         private readonly IEntityMaterializerSource _entityMaterializerSource;
 
-        public ShapedQueryExpressionVisitor(IEntityMaterializerSource entityMaterializerSource)
+        public ShapedQueryCompilingExpressionVisitor(IEntityMaterializerSource entityMaterializerSource)
         {
             _entityMaterializerSource = entityMaterializerSource;
         }

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -39,104 +40,97 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
             {
                 var memberName = memberExpression.Member.Name;
 
-                if (_datePartMapping.TryGetValue(memberName, out var datePart))
+                if (memberExpression.Expression is SqlExpression sql)
                 {
-                    return new SqlExpression(
-                        new SqlFunctionExpression(
+                    // Instance members
+                    var typeMapping = sql.TypeMapping;
+
+                    if (_datePartMapping.TryGetValue(memberName, out var datePart))
+                    {
+                        return new SqlFunctionExpression(
                             null,
                             "DATEPART",
                             null,
                             new[]{
-                            new SqlExpression(
-                                new SqlFragmentExpression(datePart, typeof(object)),
-                                _typeMappingSource.FindMapping(typeof(string))),
-                            memberExpression.Expression
+                                new SqlFragmentExpression(datePart),
+                                sql
                             },
-                            memberExpression.Type),
-                        _typeMappingSource.FindMapping(memberExpression.Type));
-                }
+                            memberExpression.Type);
+                    }
 
-                switch (memberName)
+                    if (string.Equals(memberName, nameof(DateTime.Date)))
+                    {
+                        return new SqlFunctionExpression(
+                            null,
+                            "CONVERT",
+                            null,
+                            new[]{
+                                new SqlFragmentExpression("date"),
+                                sql
+                            },
+                            memberExpression.Type);
+                    }
+
+                    if (string.Equals(memberName, nameof(DateTime.TimeOfDay)))
+                    {
+                        return new SqlCastExpression(sql, memberExpression.Type);
+                    }
+                }
+                else
                 {
-                    case nameof(DateTime.Now):
-                        return new SqlExpression(
-                            new SqlFunctionExpression(
-                                null,
-                                declaringType == typeof(DateTime) ? "GETDATE" : "SYSDATETIMEOFFSET",
-                                null,
-                                null,
-                                memberExpression.Type),
-                            _typeMappingSource.FindMapping(memberExpression.Type));
+                    Debug.Assert(memberExpression.Expression == null, "Must be static member.");
 
-                    case nameof(DateTime.UtcNow):
-                        var serverTranslation = new SqlExpression(
-                            new SqlFunctionExpression(
-                                null,
-                                declaringType == typeof(DateTime) ? "GETUTCDATE" : "SYSUTCDATETIME",
-                                null,
-                                null,
-                                memberExpression.Type),
-                            _typeMappingSource.FindMapping(memberExpression.Type));
+                    var typeMapping = _typeMappingSource.FindMapping(memberExpression.Type);
 
-                        var dateTimeOffsetTypeMapping = _typeMappingSource.FindMapping(typeof(DateTimeOffset));
+                    switch (memberName)
+                    {
+                        case nameof(DateTime.Now):
+                            return new SqlFunctionExpression(
+                                    null,
+                                    declaringType == typeof(DateTime) ? "GETDATE" : "SYSDATETIMEOFFSET",
+                                    null,
+                                    null,
+                                    memberExpression.Type);
 
-                        return declaringType == typeof(DateTime)
-                            ? serverTranslation
-                            : new SqlExpression(
-                                new SqlCastExpression(
+                        case nameof(DateTime.UtcNow):
+                            var serverTranslation = new SqlFunctionExpression(
+                                    null,
+                                    declaringType == typeof(DateTime) ? "GETUTCDATE" : "SYSUTCDATETIME",
+                                    null,
+                                    null,
+                                    memberExpression.Type);
+
+                            return declaringType == typeof(DateTime)
+                                ? (Expression)serverTranslation
+                                : new SqlCastExpression(
                                     serverTranslation,
-                                    serverTranslation.Type,
-                                    dateTimeOffsetTypeMapping.StoreType),
-                                dateTimeOffsetTypeMapping);
+                                    serverTranslation.Type);
 
-                    case nameof(DateTime.Date):
-                        return new SqlExpression(
-                            new SqlFunctionExpression(
+                        case nameof(DateTime.Today):
+                            return new SqlFunctionExpression(
                                 null,
                                 "CONVERT",
                                 null,
                                 new[]{
-                                    new SqlExpression(
-                                        new SqlFragmentExpression("date", typeof(object)),
-                                        _typeMappingSource.FindMapping(typeof(string))),
-                                    memberExpression.Expression
+                                new SqlFragmentExpression("date"),
+                                new SqlFunctionExpression(
+                                    null,
+                                    "GETDATE",
+                                    null,
+                                    null,
+                                    memberExpression.Type)
+                                    .ApplyDefaultTypeMapping(_typeMappingSource)
                                 },
-                                memberExpression.Type),
-                            _typeMappingSource.FindMapping(memberExpression.Type));
+                                memberExpression.Type)
+                                .ApplyDefaultTypeMapping(_typeMappingSource);
 
-                    case nameof(DateTime.Today):
-                        return new SqlExpression(
-                            new SqlFunctionExpression(
-                                null,
-                                "CONVERT",
-                                null,
-                                new[]{
-                                    new SqlExpression(
-                                        new SqlFragmentExpression("date", typeof(object)),
-                                        _typeMappingSource.FindMapping(typeof(string))),
-                                    new SqlExpression(
-                                        new SqlFunctionExpression(
-                                            null,
-                                            "GETDATE",
-                                            null,
-                                            null,
-                                            memberExpression.Type),
-                                        _typeMappingSource.FindMapping(memberExpression.Type))
-                                },
-                                memberExpression.Type),
-                            _typeMappingSource.FindMapping(memberExpression.Type));
-
-                    case nameof(DateTime.TimeOfDay)
-                    when memberExpression.Expression is SqlExpression sqlExpression:
-                        var timeSpanTypeMapping = _typeMappingSource.FindMapping(memberExpression.Type);
-
-                        return new SqlExpression(
-                            new SqlCastExpression(
-                                sqlExpression,
-                                memberExpression.Type,
-                                timeSpanTypeMapping.StoreType),
-                            timeSpanTypeMapping);
+                    }
                 }
+
+
+
+
+
             }
 
             return null;

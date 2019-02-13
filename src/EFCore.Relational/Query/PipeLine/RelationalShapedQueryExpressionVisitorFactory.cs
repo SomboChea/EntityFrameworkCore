@@ -6,21 +6,22 @@ using Microsoft.EntityFrameworkCore.Query.PipeLine;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
-    public class RelationalShapedQueryExpressionVisitorFactory : IShapedQueryExpressionVisitorFactory
+    public class RelationalShapedQueryCompilingExpressionVisitorFactory : IShapedQueryCompilingExpressionVisitorFactory
     {
         private readonly IEntityMaterializerSource _entityMaterializerSource;
         private readonly IQuerySqlGeneratorFactory2 _querySqlGeneratorFactory;
 
-        public RelationalShapedQueryExpressionVisitorFactory(IEntityMaterializerSource entityMaterializerSource,
+        public RelationalShapedQueryCompilingExpressionVisitorFactory(IEntityMaterializerSource entityMaterializerSource,
             IQuerySqlGeneratorFactory2 querySqlGeneratorFactory)
         {
             _entityMaterializerSource = entityMaterializerSource;
             _querySqlGeneratorFactory = querySqlGeneratorFactory;
         }
 
-        public ShapedQueryExpressionVisitor Create()
+        public ShapedQueryCompilingExpressionVisitor Create(QueryCompilationContext2 queryCompilationContext)
         {
-            return new RelationalShapedQueryExpressionVisitor(_entityMaterializerSource,
+            return new RelationalShapedQueryCompilingExpressionVisitor(
+                _entityMaterializerSource,
                 _querySqlGeneratorFactory);
         }
     }

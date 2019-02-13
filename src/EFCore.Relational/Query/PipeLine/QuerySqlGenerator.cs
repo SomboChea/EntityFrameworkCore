@@ -63,178 +63,240 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             switch (extensionExpression)
             {
                 case SelectExpression selectExpression:
-                    _relationalCommandBuilder.Append("SELECT ");
-
-                    if (selectExpression.Limit != null
-                        && selectExpression.Offset == null)
-                    {
-                        _relationalCommandBuilder.Append("TOP(");
-
-                        Visit(selectExpression.Limit);
-
-                        _relationalCommandBuilder.Append(") ");
-                    }
-
-                    if (selectExpression.Projection.Any())
-                    {
-                        GenerateList(selectExpression.Projection, e => Visit(e));
-                    }
-                    else
-                    {
-                        _relationalCommandBuilder.Append("1");
-                    }
-
-                    if (selectExpression.Tables.Any())
-                    {
-                        _relationalCommandBuilder.AppendLine()
-                            .Append("FROM ");
-
-                        GenerateList(selectExpression.Tables, e => Visit(e), sql => sql.AppendLine());
-                    }
-
-                    if (selectExpression.Predicate != null)
-                    {
-                        _relationalCommandBuilder.AppendLine()
-                            .Append("WHERE ");
-
-                        Visit(selectExpression.Predicate);
-                    }
-
-                    if (selectExpression.Orderings.Any())
-                    {
-                        _relationalCommandBuilder.AppendLine()
-                            .Append("ORDER BY ");
-
-                        GenerateList(selectExpression.Orderings, e => Visit(e));
-                    }
-
-                    if (selectExpression.Offset != null)
-                    {
-                        _relationalCommandBuilder.AppendLine()
-                            .Append("OFFSET ");
-
-                        Visit(selectExpression.Offset);
-
-                        _relationalCommandBuilder.Append(" ROWS");
-
-                        if (selectExpression.Limit != null)
-                        {
-                            _relationalCommandBuilder.Append(" FETCH NEXT ");
-
-                            Visit(selectExpression.Limit);
-
-                            _relationalCommandBuilder.Append(" ROWS ONLY");
-                        }
-                    }
-
-                    return selectExpression;
+                    return VisitSelect(selectExpression);
 
                 case ColumnExpression columnExpression:
-                    _relationalCommandBuilder.Append(_sqlGenerationHelper.DelimitIdentifier(columnExpression.Table.Alias))
-                        .Append(".")
-                        .Append(_sqlGenerationHelper.DelimitIdentifier(columnExpression.Name));
-
-                    return columnExpression;
+                    return VisitColumn(columnExpression);
 
                 case TableExpression tableExpression:
-                    _relationalCommandBuilder
-                        .Append(_sqlGenerationHelper.DelimitIdentifier(tableExpression.Table, tableExpression.Schema))
-                        .Append(" AS ")
-                        .Append(_sqlGenerationHelper.DelimitIdentifier(tableExpression.Alias));
-
-                    return tableExpression;
-
-                case SqlExpression sqlExpression:
-                    {
-                        var innerExpression = sqlExpression.Expression;
-                        if (innerExpression is ConstantExpression constantExpression)
-                        {
-                            _relationalCommandBuilder
-                                .Append(GenerateConstantLiteral(constantExpression.Value, sqlExpression.TypeMapping));
-                        }
-                        else if (innerExpression is ParameterExpression parameterExpression)
-                        {
-                            _relationalCommandBuilder
-                                .Append(GenerateParameter(parameterExpression, sqlExpression.TypeMapping));
-                        }
-                        else
-                        {
-                            Visit(innerExpression);
-                        }
-                    }
-                    return sqlExpression;
-
-                case SqlCastExpression sqlCastExpression:
-                    _relationalCommandBuilder.Append("CAST(");
-                    Visit(sqlCastExpression.Expression);
-                    _relationalCommandBuilder.Append(" AS ");
-                    _relationalCommandBuilder.Append(sqlCastExpression.StoreType);
-                    _relationalCommandBuilder.Append(")");
-
-                    return sqlCastExpression;
-
-                case OrderingExpression orderingExpression:
-                    {
-                        var innerExpression = orderingExpression.Expression.Expression;
-                        if (innerExpression is ConstantExpression constantExpression
-                            || innerExpression is ParameterExpression parameterExpression)
-                        {
-                            _relationalCommandBuilder
-                                .Append("(SELECT 1)");
-                        }
-                        else
-                        {
-                            Visit(orderingExpression.Expression);
-
-                            if (!orderingExpression.Ascending)
-                            {
-                                _relationalCommandBuilder.Append(" DESC");
-                            }
-                        }
-                    }
-
-                    return orderingExpression;
-
-                case SqlFunctionExpression sqlFunctionExpression:
-                    {
-                        if (sqlFunctionExpression.Schema != null)
-                        {
-                            _relationalCommandBuilder
-                                .Append(_sqlGenerationHelper.DelimitIdentifier(sqlFunctionExpression.Schema))
-                                .Append(".")
-                                .Append(_sqlGenerationHelper.DelimitIdentifier(sqlFunctionExpression.FunctionName));
-                        }
-                        else
-                        {
-                            _relationalCommandBuilder.Append(sqlFunctionExpression.FunctionName);
-                        }
-
-                        _relationalCommandBuilder.Append("(");
-
-                        GenerateList(sqlFunctionExpression.Arguments, e => Visit(e));
-
-                        _relationalCommandBuilder.Append(")");
-
-                        return sqlFunctionExpression;
-                    }
+                    return VisitTable(tableExpression);
 
                 case SqlFragmentExpression sqlFragmentExpression:
                     _relationalCommandBuilder.Append(sqlFragmentExpression.Sql);
 
                     return sqlFragmentExpression;
 
+                case SqlExpression sqlExpression:
+                    var innerExpression = sqlExpression.Expression;
+                    if (innerExpression is ConstantExpression constantExpression)
+                    {
+                        _relationalCommandBuilder
+                            .Append(GenerateConstantLiteral(constantExpression.Value, sqlExpression.TypeMapping));
+                    }
+                    else if (innerExpression is ParameterExpression parameterExpression)
+                    {
+                        _relationalCommandBuilder
+                            .Append(GenerateParameter(parameterExpression, sqlExpression.TypeMapping));
+                    }
+                    else if (innerExpression is SqlCastExpression sqlCastExpression)
+                    {
+                        _relationalCommandBuilder.Append("CAST(");
+                        Visit(sqlCastExpression.Expression);
+                        _relationalCommandBuilder.Append(" AS ");
+                        _relationalCommandBuilder.Append(sqlExpression.TypeMapping.StoreType);
+                        _relationalCommandBuilder.Append(")");
+
+                        return sqlCastExpression;
+                    }
+                    else
+                    {
+                        Visit(innerExpression);
+                    }
+
+                    return sqlExpression;
+
+                case OrderingExpression orderingExpression:
+                    return VisitOrdering(orderingExpression);
+
+                case SqlFunctionExpression sqlFunctionExpression:
+                    return VisitSqlFunction(sqlFunctionExpression);
+
                 case IsNullExpression isNullExpression:
-                    Visit(isNullExpression.Expression);
+                    return VisitIsNullExpression(isNullExpression);
 
-                    _relationalCommandBuilder.Append($" IS {(isNullExpression.Negated ? "NOT" : "")} NULL");
-
-                    return isNullExpression;
+                case CaseExpression caseExpression:
+                    return VisitCase(caseExpression);
             }
 
             return base.VisitExtension(extensionExpression);
         }
 
-        private string GenerateParameter(ParameterExpression parameterExpression, RelationalTypeMapping typeMapping)
+        private Expression VisitCase(CaseExpression caseExpression)
+        {
+            _relationalCommandBuilder.Append("CASE");
+
+            using (_relationalCommandBuilder.Indent())
+            {
+                foreach (var whenClause in caseExpression.WhenClauses)
+                {
+                    _relationalCommandBuilder
+                        .AppendLine()
+                        .Append("WHEN ");
+                    Visit(whenClause.Test);
+                    _relationalCommandBuilder.Append(" THEN ");
+                    Visit(whenClause.Result);
+                }
+
+                if (caseExpression.ElseResult != null)
+                {
+                    _relationalCommandBuilder
+                        .AppendLine()
+                        .Append("ELSE ");
+                    Visit(caseExpression.ElseResult);
+                }
+            }
+
+            _relationalCommandBuilder
+                .AppendLine()
+                .Append("END");
+
+            return caseExpression;
+        }
+
+        private Expression VisitIsNullExpression(IsNullExpression isNullExpression)
+        {
+            Visit(isNullExpression.Expression);
+
+            _relationalCommandBuilder.Append($" IS {(isNullExpression.Negated ? "NOT" : "")} NULL");
+
+            return isNullExpression;
+        }
+
+        private Expression VisitSqlFunction(SqlFunctionExpression sqlFunctionExpression)
+        {
+            if (sqlFunctionExpression.Schema != null)
+            {
+                _relationalCommandBuilder
+                    .Append(_sqlGenerationHelper.DelimitIdentifier(sqlFunctionExpression.Schema))
+                    .Append(".")
+                    .Append(_sqlGenerationHelper.DelimitIdentifier(sqlFunctionExpression.FunctionName));
+            }
+            else
+            {
+                _relationalCommandBuilder.Append(sqlFunctionExpression.FunctionName);
+            }
+
+            _relationalCommandBuilder.Append("(");
+
+            GenerateList(sqlFunctionExpression.Arguments, e => Visit(e));
+
+            _relationalCommandBuilder.Append(")");
+
+            return sqlFunctionExpression;
+        }
+
+        private Expression VisitOrdering(OrderingExpression orderingExpression)
+        {
+            var innerExpression = orderingExpression.Expression.Expression;
+            if (innerExpression is ConstantExpression constantExpression
+                || innerExpression is ParameterExpression parameterExpression)
+            {
+                _relationalCommandBuilder
+                    .Append("(SELECT 1)");
+            }
+            else
+            {
+                Visit(orderingExpression.Expression);
+
+                if (!orderingExpression.Ascending)
+                {
+                    _relationalCommandBuilder.Append(" DESC");
+                }
+            }
+
+            return orderingExpression;
+        }
+
+        private Expression VisitTable(TableExpression tableExpression)
+        {
+            _relationalCommandBuilder
+                .Append(_sqlGenerationHelper.DelimitIdentifier(tableExpression.Table, tableExpression.Schema))
+                .Append(" AS ")
+                .Append(_sqlGenerationHelper.DelimitIdentifier(tableExpression.Alias));
+
+            return tableExpression;
+        }
+
+        protected Expression VisitColumn(ColumnExpression columnExpression)
+        {
+            _relationalCommandBuilder
+                .Append(_sqlGenerationHelper.DelimitIdentifier(columnExpression.Table.Alias))
+                .Append(".")
+                .Append(_sqlGenerationHelper.DelimitIdentifier(columnExpression.Name));
+
+            return columnExpression;
+        }
+
+        protected Expression VisitSelect(SelectExpression selectExpression)
+        {
+            _relationalCommandBuilder.Append("SELECT ");
+
+            if (selectExpression.Limit != null
+                && selectExpression.Offset == null)
+            {
+                _relationalCommandBuilder.Append("TOP(");
+
+                Visit(selectExpression.Limit);
+
+                _relationalCommandBuilder.Append(") ");
+            }
+
+            if (selectExpression.Projection.Any())
+            {
+                GenerateList(selectExpression.Projection, e => Visit(e));
+            }
+            else
+            {
+                _relationalCommandBuilder.Append("1");
+            }
+
+            if (selectExpression.Tables.Any())
+            {
+                _relationalCommandBuilder.AppendLine()
+                    .Append("FROM ");
+
+                GenerateList(selectExpression.Tables, e => Visit(e), sql => sql.AppendLine());
+            }
+
+            if (selectExpression.Predicate != null)
+            {
+                _relationalCommandBuilder.AppendLine()
+                    .Append("WHERE ");
+
+                Visit(selectExpression.Predicate);
+            }
+
+            if (selectExpression.Orderings.Any())
+            {
+                _relationalCommandBuilder.AppendLine()
+                    .Append("ORDER BY ");
+
+                GenerateList(selectExpression.Orderings, e => Visit(e));
+            }
+
+            if (selectExpression.Offset != null)
+            {
+                _relationalCommandBuilder.AppendLine()
+                    .Append("OFFSET ");
+
+                Visit(selectExpression.Offset);
+
+                _relationalCommandBuilder.Append(" ROWS");
+
+                if (selectExpression.Limit != null)
+                {
+                    _relationalCommandBuilder.Append(" FETCH NEXT ");
+
+                    Visit(selectExpression.Limit);
+
+                    _relationalCommandBuilder.Append(" ROWS ONLY");
+                }
+            }
+
+            return selectExpression;
+        }
+
+        protected string GenerateParameter(ParameterExpression parameterExpression, RelationalTypeMapping typeMapping)
         {
             var parameterNameInCommand = _sqlGenerationHelper.GenerateParameterName(parameterExpression.Name);
 
@@ -251,7 +313,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             return _sqlGenerationHelper.GenerateParameterNamePlaceholder(parameterExpression.Name);
         }
 
-        private string GenerateConstantLiteral(object value, RelationalTypeMapping typeMapping)
+        protected string GenerateConstantLiteral(object value, RelationalTypeMapping typeMapping)
         {
             //var mappingClrType = typeMapping.ClrType.UnwrapNullableType();
 

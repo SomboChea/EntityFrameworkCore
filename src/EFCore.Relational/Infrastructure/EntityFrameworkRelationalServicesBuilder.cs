@@ -80,7 +80,6 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
                 { typeof(Query.ExpressionTranslators.IMemberTranslator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(ICompositeMethodCallTranslator), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IQuerySqlGeneratorFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
-                { typeof(IQuerySqlGeneratorFactory2), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IRelationalTransactionFactory), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(ICommandBatchPreparer), new ServiceCharacteristics(ServiceLifetime.Scoped) },
                 { typeof(IModificationCommandBatchFactory), new ServiceCharacteristics(ServiceLifetime.Scoped) },
@@ -97,6 +96,9 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
                 { typeof(IRelationalTypeMappingSourcePlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
                 { typeof(IMethodCallTranslatorPlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
                 { typeof(IMemberTranslatorPlugin), new ServiceCharacteristics(ServiceLifetime.Singleton, multipleRegistrations: true) },
+
+                // New Query Pipeline
+                { typeof(IQuerySqlGeneratorFactory2), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IMethodCallTranslatorProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) },
                 { typeof(IMemberTranslatorProvider), new ServiceCharacteristics(ServiceLifetime.Singleton) }
             };
@@ -162,10 +164,6 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
             TryAdd<IExpressionPrinter, RelationalExpressionPrinter>();
             TryAdd<IRelationalResultOperatorHandler, RelationalResultOperatorHandler>();
             TryAdd<IQueryContextFactory, RelationalQueryContextFactory>();
-            TryAdd<IQuerySqlGeneratorFactory2, QuerySqlGeneratorFactory2>();
-            TryAdd<IEntityQueryableExpressionVisitorFactory2, RelationalEntityQueryableExpressionVisitorFactory2>();
-            TryAdd<IShapedQueryExpressionVisitorFactory, RelationalShapedQueryExpressionVisitorFactory>();
-            TryAdd<IQueryableMethodTranslatingExpressionVisitorFactory, RelationalQueryableMethodTranslatingExpressionVisitorFactory>();
             TryAdd<IQueryCompilationContextFactory, RelationalQueryCompilationContextFactory>();
             TryAdd<IEntityQueryableExpressionVisitorFactory, RelationalEntityQueryableExpressionVisitorFactory>();
             TryAdd<IEntityQueryModelVisitorFactory, RelationalQueryModelVisitorFactory>();
@@ -177,8 +175,14 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
             TryAdd<ReLinq.IEvaluatableExpressionFilter, ReLinqRelationalEvaluatableExpressionFilter>();
             TryAdd<IEvaluatableExpressionFilter, RelationalEvaluatableExpressionFilter>();
             TryAdd<IRelationalTransactionFactory, RelationalTransactionFactory>();
+
+            // New Query pipeline
+            TryAdd<IQuerySqlGeneratorFactory2, QuerySqlGeneratorFactory2>();
+            TryAdd<IShapedQueryCompilingExpressionVisitorFactory, RelationalShapedQueryCompilingExpressionVisitorFactory>();
+            TryAdd<IQueryableMethodTranslatingExpressionVisitorFactory, RelationalQueryableMethodTranslatingExpressionVisitorFactory>();
             TryAdd<IMethodCallTranslatorProvider, RelationalMethodCallTranslatorProvider>();
             TryAdd<IMemberTranslatorProvider, RelationalMemberTranslatorProvider>();
+            TryAdd<IEntityQueryableExpressionVisitorsFactory, RelationalEntityQueryableExpressionVisitorsFactory>();
 
             TryAdd<ISingletonUpdateSqlGenerator>(
                 p =>

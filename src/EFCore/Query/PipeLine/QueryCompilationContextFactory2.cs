@@ -5,26 +5,38 @@ namespace Microsoft.EntityFrameworkCore.Query.PipeLine
 {
     public class QueryCompilationContextFactory2 : IQueryCompilationContextFactory2
     {
-        private readonly IEntityQueryableExpressionVisitorFactory2 _entityQueryableExpressionVisitorFactory;
-        private readonly IShapedQueryExpressionVisitorFactory _shapedQueryExpressionVisitorFactory;
+        private readonly IQueryOptimizingExpressionVisitorsFactory _queryOptimizingExpressionVisitorsFactory;
+        private readonly IEntityQueryableExpressionVisitorsFactory _entityQueryableExpressionVisitorsFactory;
         private readonly IQueryableMethodTranslatingExpressionVisitorFactory _queryableMethodTranslatingExpressionVisitorFactory;
+        private readonly IShapedQueryOptimizingExpressionVisitorsFactory _shapedQueryOptimizingExpressionVisitorsFactory;
+        private readonly IShapedQueryCompilingExpressionVisitorFactory _shapedQueryCompilingExpressionVisitorFactory;
 
         public QueryCompilationContextFactory2(
-            IEntityQueryableExpressionVisitorFactory2 entityQueryableExpressionVisitorFactory,
-            IShapedQueryExpressionVisitorFactory shapedQueryExpressionVisitorFactory,
-            IQueryableMethodTranslatingExpressionVisitorFactory queryableMethodTranslatingExpressionVisitorFactory)
+            IQueryOptimizingExpressionVisitorsFactory queryOptimizingExpressionVisitorsFactory,
+            IEntityQueryableExpressionVisitorsFactory entityQueryableExpressionVisitorsFactory,
+            IQueryableMethodTranslatingExpressionVisitorFactory queryableMethodTranslatingExpressionVisitorFactory,
+            IShapedQueryOptimizingExpressionVisitorsFactory shapedQueryOptimizingExpressionVisitorsFactory,
+            IShapedQueryCompilingExpressionVisitorFactory shapedQueryCompilingExpressionVisitorFactory)
         {
-            _entityQueryableExpressionVisitorFactory = entityQueryableExpressionVisitorFactory;
-            _shapedQueryExpressionVisitorFactory = shapedQueryExpressionVisitorFactory;
+            _queryOptimizingExpressionVisitorsFactory = queryOptimizingExpressionVisitorsFactory;
+            _entityQueryableExpressionVisitorsFactory = entityQueryableExpressionVisitorsFactory;
             _queryableMethodTranslatingExpressionVisitorFactory = queryableMethodTranslatingExpressionVisitorFactory;
+            _shapedQueryOptimizingExpressionVisitorsFactory = shapedQueryOptimizingExpressionVisitorsFactory;
+            _shapedQueryCompilingExpressionVisitorFactory = shapedQueryCompilingExpressionVisitorFactory;
         }
 
         public QueryCompilationContext2 Create(bool async)
         {
-            return new QueryCompilationContext2(
-                _entityQueryableExpressionVisitorFactory,
-                _shapedQueryExpressionVisitorFactory,
-                _queryableMethodTranslatingExpressionVisitorFactory);
+            var queryCompilationContext = new QueryCompilationContext2(
+                _queryOptimizingExpressionVisitorsFactory,
+                _entityQueryableExpressionVisitorsFactory,
+                _queryableMethodTranslatingExpressionVisitorFactory,
+                _shapedQueryOptimizingExpressionVisitorsFactory,
+                _shapedQueryCompilingExpressionVisitorFactory);
+
+            queryCompilationContext.Async = async;
+
+            return queryCompilationContext;
         }
     }
 }

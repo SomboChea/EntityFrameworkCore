@@ -19,7 +19,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
         {
         }
 
-        private SqlExpression(Expression expression, Type type, RelationalTypeMapping typeMapping)
+        protected SqlExpression(Expression expression, Type type, RelationalTypeMapping typeMapping)
         {
             Expression = expression;
             Type = type;
